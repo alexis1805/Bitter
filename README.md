@@ -1,0 +1,2 @@
+# Bitter
+Tweeter sentiment analysis
