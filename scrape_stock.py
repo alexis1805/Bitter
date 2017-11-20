@@ -1,18 +1,15 @@
-from tweepy import StreamListener
+from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
-import tweepy
 import pymysql
 import time
 import json
 import sys
 import re
-import urllib2 as ul
+import urllib.request as ul
 from bs4 import BeautifulSoup
 
-name = "Apple"
-
-conn = pymysql.connect(host="localhost",port=3306,user="root",passwd="root",charset='utf8')
+conn = pymysql.connect(host="localhost",port=3306,user="root",passwd="",charset='utf8')
 c = conn.cursor()
 
 c.execute('CREATE DATABASE if not exists tweet_data')
@@ -21,15 +18,15 @@ c.execute('SET NAMES utf8;')
 c.execute('SET CHARACTER SET utf8;')
 c.execute('SET character_set_connection=utf8;')
 
-table_name=name.replace (" ", "_")
+table_name=sys.argv[1].replace (" ", "_")
 query='CREATE TABLE if not exists %s (time varchar(30),username varchar(40), tweet varchar(300),sentiment varchar(10));' % table_name
 
 c.execute(query)
 
-consumer_key = "Kte6gUzchHNYTwSYH1G8yiDZD"
-consumer_secret = "goxlr4Cm4y0B6meNI8EXFZJr6FmMeBO30lDdPsQmd2JCeqQzte"
-access_token= "3878331640-vhzcPfNjKiTNPeiK960m5GQEbVvYGybraX5klXP"
-access_token_secret = "MoKncE32sak96TuMmOz8pMmx5tn9lxkLShgJS2n6oD98s"
+consumer_key = "oWwj4n238NZ8Y7EvuaEDxy1sa"
+consumer_secret = "eKZQnTjKxRh1ZMjueF7excNwBHMuqkQpbxvKtUj2Y2UXHFUbd0"
+access_token= "3397148596-udefnWb7gUddt6ADanLCNV6opCXhglJfVMV5Kai"
+access_token_secret = "lVfKlGnd9SK0HdJ6giGDFbzz3dO3LU96Uk7ili4mUoXVB"
 
 def score(text, wgood,wbad):
     count=0
@@ -75,10 +72,7 @@ def liveprice(ticker):
     return live[0]
 
 class StdOutListener(StreamListener):
-
-    def __init__(self, name):
-        self.name = name
-        
+   
     def on_data(self, data):
 
         all_data=json.loads(data)
@@ -95,25 +89,22 @@ class StdOutListener(StreamListener):
         c.execute (query_test, (username,tweet,score(tweet,good,bad)))
         conn.commit()
 
-        output = open('tweet_data_'+self.name+'.txt','a')
-        output.write(str(score(tweet,good,bad))+' '+str(liveprice(self.name[1:])))
+        output = open('tweet_data_'+sys.argv[1]+'.txt','a')
+        output.write(str(score(tweet,good,bad))+' '+str(liveprice(sys.argv[1][1:])))
         output.write('\n')
         output.close()
         return True
 
     def on_error(self, status):
-        print status
+        print(status)
 
 
 if __name__ == '__main__':
-    #This handles Twitter authetification and the connection to Twitter Streaming API
-    #l = StdOutListener(name)
+
+    #This handles Twitter authentification and the connection to Twitter Streaming API
+    l = StdOutListener()
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
-    #stream = Stream("username", "password", l)
+    stream = Stream(auth, l)
 
-    #stream.filter(track=[name])
-    api = tweepy.API(auth)
-    public_tweets = api.home_timeline()
-    for tweet in public_tweets:
-        print tweet.text
+    stream.filter(track=[sys.argv[1]])
